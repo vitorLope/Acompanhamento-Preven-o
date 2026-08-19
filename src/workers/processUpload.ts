@@ -6,6 +6,8 @@ import { redisClient } from '../lib/queue';
 
 const connection = redisClient; // reuse ioredis connection
 
+const BATCH_SIZE = 1000;
+
 const worker = new Worker('default', async (job: Job) => {
   const { uploadId, filepath } = job.data as { uploadId: number; filepath: string };
 
@@ -21,13 +23,13 @@ const worker = new Worker('default', async (job: Job) => {
 
     let totalOcorrencias = 0;
     const cargasSet = new Set<string>();
+    const occurrences: any[] = [];
 
     for (const row of parsed) {
-      const divergencias = explodeDivergencias(row);
       if (row.numero_carga) cargasSet.add(String(row.numero_carga));
-
+      const divergencias = explodeDivergencias(row);
       for (const d of divergencias) {
-        await prisma.tbOcorrencia.create({ data: {
+        occurrences.push({
           data_inspecao: d.data_inspecao,
           cd: d.cd,
           turno: d.turno,
@@ -37,10 +39,21 @@ const worker = new Worker('default', async (job: Job) => {
           colaborador: d.colaborador,
           produto: d.produto,
           quantidade: d.quantidade,
-          upload_id: uploadId
-        }});
+          upload_id: uploadId,
+          created_at: new Date()
+        });
         totalOcorrencias++;
+
+        // flush batch
+        if (occurrences.length >= BATCH_SIZE) {
+          await prisma.tbOcorrencia.createMany({ data: occurrences });
+          occurrences.length = 0;
+        }
       }
+    }
+
+    if (occurrences.length > 0) {
+      await prisma.tbOcorrencia.createMany({ data: occurrences });
     }
 
     await prisma.tbUpload.update({ where: { id: uploadId }, data: {

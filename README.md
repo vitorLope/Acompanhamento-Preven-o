@@ -1,12 +1,13 @@
-# Backend skeleton for Acompanhamento-Preven-o
+### Test / sample instructions
 
-Scripts and basic dependencies to start the backend. This commit creates the core files: Prisma schema, queue, worker, upload route and a simple Excel parser to detect CONSINCO/INFOR layouts.
+Added a small script to generate sample Excel files for local testing of the parser and worker.
 
-Run locally:
+To generate samples:
 
-1. copy .env.example to .env and set DATABASE_URL and REDIS_URL
-2. docker-compose up -d
-3. pnpm install (or npm install)
-4. npx prisma migrate dev --name init
-5. pnpm build && pnpm start
+1. node scripts/generate-samples.js
 
+This will create ./samples/sample-consinco.xlsx and ./samples/sample-infor.xlsx which you can upload via the POST /api/upload endpoint to exercise the worker.
+
+Notes:
+- Ensure dependencies (exceljs, bullmq, ioredis, prisma client) are installed.
+- Run worker and api as described in README.
