@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model TbUpload {
+  id                Int       @id @default(autoincrement())
+  filename          String
+  filepath          String
+  system            String?   // CONSINCO | INFOR
+  status            String
+  total_lines       Int?
+  total_cargas      Int?
+  total_ocorrencias Int?
+  created_at        DateTime  @default(now())
+  processed_at      DateTime?
+  error_message     String?
+
+  @@map("tb_uploads")
+}
+
+model TbOcorrencia {
+  id               Int      @id @default(autoincrement())
+  data_inspecao    DateTime @db.Timestamp(6) @index
+  cd               String   @index
+  turno            String   @index
+  tipo_atividade   String
+  numero_carga     String
+  tipo_divergencia String   @index
+  colaborador      String
+  produto          String
+  quantidade       Int
+  upload_id        Int
+  upload           TbUpload @relation(fields: [upload_id], references: [id])
+  created_at       DateTime @default(now())
+
+  @@map("tb_ocorrencias")
+}
+
+model TbAcuracidade {
+  id                 Int      @id @default(autoincrement())
+  data_inicio        DateTime
+  data_fim           DateTime
+  cd                 String?
+  turno              String?
+  tipo_atividade     String?
+  volume_auditado    BigInt
+  total_divergencias BigInt
+  indice_divergencia Float
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  @@map("tb_acuracidade")
+}
